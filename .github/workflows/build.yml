@@ -11,9 +11,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # -------------------------
+      # 1️⃣ Checkout the repository
+      # -------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # Backend build
+      # -------------------------
+      # 2️⃣ Backend (Spring Boot)
+      # -------------------------
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -24,14 +30,40 @@ jobs:
         working-directory: backend
         run: mvn clean package -DskipTests
 
-      # Frontend build
-      - name: Setup Node.js
+      # Upload JAR file as artifact
+      - name: Upload backend JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+
+      # -------------------------
+      # 3️⃣ Frontend (React)
+      # -------------------------
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '22'
 
-      - name: Build React frontend
+      - name: Install and build React frontend
         working-directory: frontend
         run: |
           npm ci
           npm run build
+
+      # Upload React build as artifact
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/build
+
+      # -------------------------
+      # 4️⃣ Optional: Verify artifacts
+      # -------------------------
+      - name: List generated artifacts
+        run: |
+          echo "=== Backend JARs ==="
+          ls -l backend/target/*.jar || true
+          echo "=== Frontend Build ==="
+          ls -l frontend/build || true
